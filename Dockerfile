@@ -6,7 +6,7 @@ ENV ROOT /app
 ENV OUT_DIR ${ROOT}/out
 ENV PACKAGES="ca-certificates git curl bash zsh wget"
 
-RUN apt-get update && apt-get install -y ${PACKAGES} && \
+RUN apt-get update && apt-get --no-install-recommends install -y ${PACKAGES} && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
