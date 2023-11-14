@@ -58,3 +58,7 @@
 
 Trivyでは「コンテナの実行ユーザーをroot以外のユーザーにする」などベストプラクティスをポリシーとして定義しており、それを満たしているかチェックしてくれる 
 - 実行してみた結果'apt-get'によるインストールでは、イメージサイズを最小化するために'--no-install-recommends'を使うべきである。とでた！
+- Dockerfileのスキャンにビルトインポリシーとして[aquasecurity/defsec](https://github.com/aquasecurity/defsec)のポリシーを使用
+　　- このビルトインポリシー以外にも独自に定義したカスタムポリシーを利用でき、検知項目を追加できる
+- TrivyのポリシーはRego言語で記述する
+  - RegoはOpen Policy Agentのポリシーエンジンで利用されている言語で、Policy as Code(ポリシーをコードで管理)という考え方で実践
