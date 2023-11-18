@@ -99,3 +99,19 @@ FROM alpine:latest
 COPY --from=builder /go/src/github.com./user/repo/app ./
 CMD ["./app"]
 ```
+
+### コンテナイメージへの署名による改ざん対策
+- サプライチェーン攻撃への対策の1つに、コンテナイメージへの署名とその検証
+　　- コンテナイメージの公開者しか知り得ない秘密鍵を使ってコンテナイメージに署名し、使用者はペアとなる公開鍵で検証を行う(これにより実行する前に改ざんを検知できる)
+- Docker Content Trustによる署名と検証
+  - Docker Content Trustとはイメージ作成者が特定のイメージタグにデジタル署名し、イメージ利用者がそれを検証できる仕組みのこと
+  - Docker Content Trustを使うにはレジストリの他にNotaryと呼ばれるサーバーが必要
+  - Notaryでは階層を持つ複数の鍵が必要
+    - Root Key
+    - Target Key
+    - Delegation Key
+  - その他いくつもの鍵を作成する必要があるが全てdocker push時に自動で作成される
+  - Root KeyやTarget Keyはデフォルトで`~/.docker/trust/private`に保存されるので必ず安全な場所にバックアップをとっておく
+  - 次回から同一リポジトリにpushする場合に、Target Keyのパスフレーズが求められる。
+  - イメージが署名されているかどうかはdocker trust inspectコマンドで確認できる
+  - また、DOCKER_CONTENT_TRUST=1を設定した状態でdocker pullなどを実行すると署名の検証が強制され、イメージに署名がない場合エラーになる
