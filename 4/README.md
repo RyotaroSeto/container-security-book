@@ -62,3 +62,40 @@ Trivyでは「コンテナの実行ユーザーをroot以外のユーザーに�
 　　- このビルトインポリシー以外にも独自に定義したカスタムポリシーを利用でき、検知項目を追加できる
 - TrivyのポリシーはRego言語で記述する
   - RegoはOpen Policy Agentのポリシーエンジンで利用されている言語で、Policy as Code(ポリシーをコードで管理)という考え方で実践
+
+## 4.3 セキュアなコンテナイメージを作る
+### コンテナにクレデンシャルを含めずにビルドする
+- クレデンシャルをレイヤに残さない方法として、ここではdocker buildの`-sercret`オプションを使う方法とマルチステージビルドを使った方法を紹介
+
+### docker build --sercretを使った機密データのマウント
+- `Buildkit`が採用されdockerコマンド実行時に`DOCKER_BUILDKIT=1`環境変数を設定するか、Dockerデーモンの設定ファイル`/etc/docker/daemon.json`を以下のように設定する
+```json
+{
+  "features": {
+    "buildkit": true
+  }
+}
+```
+
+```Dockerfile
+FROM alpine
+
+# idに識別のためのIDを、targetにマウント先のファイルパスを指定する　　　　クレデンシャルのファイルがマウントされるため、レイアに残らない
+RUN --mount=type=secret,id=mysecret,target=/secret.text
+```
+```bash
+# idにDockerfileで指定したIDを、srcにホスト側にある機密データのファイルパスを指定する
+DOCKER_BUILDKIT=1 docker build -t test:latest --sercret id=mysecret,src=$(pwd) secret.text
+```
+
+### マルチステージビルドで最終成果打つだけイメージに含める
+```Dockerfile
+FROM golang:1.16 AS builder
+WORKDIR /go/src/github.com/user/repo
+COPY app.go ./
+RUN CGO_ENABLED=0 GOOS=linux go build -o app .
+
+FROM alpine:latest
+COPY --from=builder /go/src/github.com./user/repo/app ./
+CMD ["./app"]
+```
