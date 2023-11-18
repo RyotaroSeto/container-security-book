@@ -129,3 +129,9 @@ CMD ["./app"]
   - またsigstoreはKubernetes上にデプロイされるコンテナイメージを検証するPolicy ControllerやGitのcommitにも署名できるような実装を提供している
  
 ### Dockerfileのベストプラクティス
+- rootユーザーを使用しない
+  - コンテナが侵害されて、ホスト側にエスケープされた場合にホスト側のroot権限が取得されてしまう恐れがあるため
+  - Dockerでユーザーを指定するには`--user`オプションを使用する
+```bash
+docker run --user 1000:1000 ubuntu:20.04 bash
+```
