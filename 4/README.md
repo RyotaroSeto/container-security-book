@@ -128,7 +128,7 @@ CMD ["./app"]
   - 用途として、Github ActionsのWorkflowのようにプラグラムでIDトークンを取得できる場合は、人間が認証する必要がなく、プログラマブルに認証できる
   - またsigstoreはKubernetes上にデプロイされるコンテナイメージを検証するPolicy ControllerやGitのcommitにも署名できるような実装を提供している
  
-### Dockerfileのベストプラクティス
+### [Dockerfileのベストプラクティス](https://qiita.com/bricolageart/items/b78a68f3003842beeb24)
 - rootユーザーを使用しない
   - コンテナが侵害されて、ホスト側にエスケープされた場合にホスト側のroot権限が取得されてしまう恐れがあるため
   - Dockerでユーザーを指定するには`--user`オプションを使用する
