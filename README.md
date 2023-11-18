@@ -15,3 +15,5 @@
 ### Dockerfile のスキャン
 
 - trivy config .
+
+- trivy config --policy-namespaces user .
