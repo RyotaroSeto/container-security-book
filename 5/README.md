@@ -37,8 +37,11 @@ chown, dac_override, fowner, fsetid, kill, setgid, setuid, setpcap, net_bind_ser
 
 ```bash
 brew install docker-slim
-docker-slim build --copy-meta-artifacts artifacts nginx-latest
+slim build --copy-meta-artifacts artifacts nginx-latest
 ```
+
+- また Kubernetes 環境では [Security Profiles Operator(SPO)](https://speakerdeck.com/okepy/try-security-profiles-operator?slide=9)を使うと同様にプロファイルを生成できる
+- 厳密に、アプリケーションが呼び出すシステムコールだけに限定したい場合、[libseccomp](https://github.com/seccomp/libseccomp) などのライブラリを使用して、アプリケーション自身で Seccomp を使用するように実装すると良い
 
 ## 5.3 ファイルアクセスの制限
 
