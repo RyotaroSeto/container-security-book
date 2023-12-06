@@ -57,3 +57,57 @@ docker run --rm -it --read-only ubuntu:20.04 bash
 - Dockerはデフォルトでdocker-defaultというプロファイルを適用している
 - AppArmorもSeccompと同様に独自のプロファイルを適用でき、強固なコンテナを実現できる
 ## 5.4 リソースの制限
+Dockerなどの多くのコンテナはCPUやメモリのリソース使用量のデフォルト値に制限をかけていないため、Dos攻撃やバグで高負荷になった場合、ホスト側も高負荷になってしまい、他のコンテナに影響を及ぼすため、リソースの使用量を制限する必要がある。
+
+### CPU使用率の制限
+- コンテナのCPU使用率を制御するには`--cpus`オプションでCPUコア数を指定する
+  - 8コアのCPUを搭載しているホストで、CPU使用率を50%に抑えたい場合は4(4÷8=0.5=50%)を指定する。これにより8コアのうち4コア分までCPUを使用許可がでる
+  - `--cpu`オプション以外にも`--cpu-period`と`--cpu-quota`を使用して指定時間あたりの上限を設定できる
+```bash
+docker run --rm -it --cpus 4 ubuntu bash
+```
+
+### メモリ使用量の制限
+- 時間経過でメモリ使用量が増加するメモリリークのようなバグ、Dos攻撃によるメモリ使用量を大きく消費などはコンテナのメモリ使用量を制限することで緩和策になる
+- メモリ使用量の制限をかけるには`--memory`オプションを指定する
+- もし制限をかけたサイズ以上のメモリを使用したら、そのプロセスはOOM Killerによって強制的に終了させられる。
+- OOM Killerによってプロセスを強制終了させたくない場合、`--oom-kill-disable`オプションでtrueの指定か、`--oom-score-adj`オプションでoom_score_adjの調整をする
+```bash
+docker run --rm -it --memory 1G ubuntu
+```
+
+### プロセス数の制限
+- Fork爆弾のような攻撃により、新規にプロセスを作成できなくなったり、プロセスの生成に時間がかかってしまったりすることがある。
+- このような攻撃にはコンテナごとにプロセス数の制限をかけることが対策
+- Dockerでは`--pids-limit`オプションでコンテナ内で実行されるプロセス数の上限を設定できる。
+```bash
+docker run --rm -it --pids-limit 10 --name pids-limit-test ubuntu bash
+```
+
+### ストレージ使用量の制限
+- コンテナのルートファイルシステムやDockerボリュームは、記憶装置としてホストのストレージや外部のファイルストレージが使用される。
+- そのため、サイズの大きいファイルが大量に作成されることによりストレージ容量が圧迫され、ディスクフルになることがある。
+- それを防ぐためにコンテナのルートファイルシステムや使用しているボリュームに容量制限を適用するべき
+- Dockerでは`--storage-opt`オプションを使うことで、コンテナのルートファイルシステムの容量を制限できる。
+- ただし`--storage-opt`オプションは以下の上限を満たす必要がある
+  - ストレージドライバがDevice Mapper,btrfs,zfsのいずれがであること
+  - ストレージドライバがoverlay2であり/var/lib/docker配下がpquotaをサポートしているXFSでマウントされていること
+- 現在しようしているストレージドライバはdocker infoで確認できる
+- デフォルトではoverlay2になっている。
+- ストレージドライバは/etc/docker/daemon.jsonにて変更できる
+```bash
+docker run --rm -it --storage-opt size=1G ubuntu bash
+```
+
+### cpulimitとulimitを使ったリソース制限
+- cgroups以外でリソース制限する方法として`cpulimit`と`ulimit`がある
+- `cpulimit`はSIGSTOPとSIGCONTシグナルをぬねにプロセスに送信することで、プロセスのCPU使用量を制御するツール
+  - CPUの使用を0.5コア分にしたい場合は以下
+```bash
+docker run ubuntu cpulimit --limit=50 --include-clildren
+```
+- メモリ使用量やプロセス数を制限するには`ulimit`を使う
+  - VSZ(仮想メモリ)に使用量を1GBに制限するのは以下
+```bash
+docker run ubuntu sh -c "ulimit -v 1048576;"
+```
