@@ -44,5 +44,16 @@ slim build --copy-meta-artifacts artifacts nginx-latest
 - 厳密に、アプリケーションが呼び出すシステムコールだけに限定したい場合、[libseccomp](https://github.com/seccomp/libseccomp) などのライブラリを使用して、アプリケーション自身で Seccomp を使用するように実装すると良い
 
 ## 5.3 ファイルアクセスの制限
-
+### ファイルシステムをread-onlyでマウントしてファイルの改ざんを防止する
+- アプリケーションの脆弱性を悪用してファイルを変更して、Webサイトを改ざんする攻撃がある。
+  - フィッシングサイトやマルウェアの配信に利用されるだけでなく、不正なファイルを作成して実行されることもある
+- 上記のような改ざんをコンテナではルートファイルシステムをread-onlyでマウントして実行できるため、ファイルが改ざんできないように構成されている。
+  - 注意点としてread-onlyでマウントしても/devや/sys/fs/cgroup配下などは書き込み可能
+```bash
+docker run --rm -it --read-only ubuntu:20.04 bash
+```
+### AppArmorによるファイルアクセス制限
+- 多くのコンテナランタイムはAppArmorでコンテナを保護している
+- Dockerはデフォルトでdocker-defaultというプロファイルを適用している
+- AppArmorもSeccompと同様に独自のプロファイルを適用でき、強固なコンテナを実現できる
 ## 5.4 リソースの制限
