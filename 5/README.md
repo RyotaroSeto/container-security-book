@@ -111,3 +111,14 @@ docker run ubuntu cpulimit --limit=50 --include-clildren
 ```bash
 docker run ubuntu sh -c "ulimit -v 1048576;"
 ```
+
+## 5.5 コンテナ実行ユーザーの変更と権限昇格の防止
+### コンテナ実行時のユーザーの変更
+- Dockerfile内でUSER命令を使用したり、docker runコマンドに--userオプションを使用したりすることで、ユーザーを変更できる
+
+### User Namespaceの使用
+- Linux Namespacesの中にはUser Namespaceと呼ばれるNamespaceがある。
+  - これはホスト側のUID/GIDとは別に、Namespace内で独立したUID/GIDを持つことができるように分離できるもの
+- User Namespaceに加えてIDマッピングと呼ばれる仕組みを使うことで「ホスト側ではUID 1000で動作しているが、コンテナないではUID 0で動作しているように見せかける」ことができる
+  - これによりrootとして動作することが求められるアプリケーションを安全に動かすことができる
+- User Namespaceは`unshare`コマンドの-Uフラグで分離できる。また。-rオプションでNamespace内のrootユーザーと実行時のユーザーをマッピングできる
