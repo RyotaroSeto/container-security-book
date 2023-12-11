@@ -122,3 +122,32 @@ docker run ubuntu sh -c "ulimit -v 1048576;"
 - User Namespaceに加えてIDマッピングと呼ばれる仕組みを使うことで「ホスト側ではUID 1000で動作しているが、コンテナないではUID 0で動作しているように見せかける」ことができる
   - これによりrootとして動作することが求められるアプリケーションを安全に動かすことができる
 - User Namespaceは`unshare`コマンドの-Uフラグで分離できる。また。-rオプションでNamespace内のrootユーザーと実行時のユーザーをマッピングできる
+
+### 非rootユーザーでランタイムを実行する(Rootlessモードを使用する)
+- コンテナを非rootで動かす方法を上記で紹介したが、コンテナの実行ユーザーを変更してもDockerデーモンなどのランタイムはrootで動作している
+  - ランタイムに脆弱性がある場合、ホスト側のrootを取得される可能性があるため、Dockerにはランタイム自体も非rootで動かすRootlessモードがある
+- [Rootlessモードを使用する方法](https://docs.docker.com/engine/security/rootless/)
+- Rootlessモードには以下のような制約がある
+  - cgroup v2でなければ--cpusや--memory,--pids-limitなどのフラグを使ったリソース制限ができない
+  - docker infoコマンドを実行し、Cgroup Driverの値がnoneになっている場合や、Cgroup Versionの値が1の場合は条件を満たしていないことになる
+  - AppArmorやCheckpointなどの機能が使用できない
+  - 使用できるストレージドライバに制約がある。例えばoverlay2を使うにはUbuntuベースのカーネルか、5.11以上のカーネルを使用する必要あいr
+  - Host networkは使用できない
+
+### No New Privilegesによる権限昇格の防止
+- コンテナの中にsetuidされたバイナリがある場合、権限昇格する恐れがある
+- このような権限昇格を防ぐために、Dockerでは--security-opt=no-new-privilegesというオプションがある
+  - これはprctlすすテムコールでPR_SET_NO_NEW_PRIVSフラグを使用し、コンテナで実行するプロセスが新しい特権を取得することを禁止する機能
+
+## 5.6 セキュアなコンテナランタイムの使用
+- ホスト側のカーネルを共有していることは変わらないため、カーネルの脆弱性を悪用される恐れがあり、ホストとしての分離レベルは弱いまま
+- 以下では軽量で高速なコンテナの特性を維持しつつ、ホストとの分離レベルを強力にするセキュアなランタイム
+  - gVisor
+  - Sysbox
+  - Kata Containers
+ 
+## 5.7 セキュアに運用するためのガイドライン
+以下はDockerやLinuxコンテナのセキュリティベストプラクティスをまとめている
+- CIS Benchmark
+- OWASP Docker Security Cheatsheet
+- NIST SP.800-190 Application Container Security
