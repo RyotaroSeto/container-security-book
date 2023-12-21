@@ -1,33 +1,20 @@
+# サイドカーパターンでFalcoのアラートをfalcosidekickで転送する
 services:
-  app:
-    image: ubuntu
-    command:
-      [
-        'bash',
-        '-c',
-        'while :; do echo `date` >> /mnt/log/log.txt; sleep 1; done',
-      ]
+  falco:
+    image: falcosecurity/falco:0.32.2
+    privileged: true
     volumes:
-      - log:/mnt/log
-  fluent-bit:
-    image: fluent/fluent-bit:1.9.7
-    command:
-      [
-        '/fluent-bit/bin/fluent-bit',
-        '-i',
-        'tail',
-        '-p',
-        'path=/mnt/log/log.txt',
-        '-o',
-        'stdout',
-      ]
-    volumes:
-      - log:/mnt/log
+      - /dev:/host/dev
+      - /proc:/host/proc:ro
+      - /boot:/host/boot:ro
+      - /lib/modules:/host/lib/modules:ro
+      - /usr:/host/usr:ro
+      - /etc:/host/etc:ro
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ./falco.yaml:/etc/falco/falco.yaml:ro
     depends_on:
-      - app
-
-volumes:
-  log:
-    driver_opts:
-      type: tmpfs
-      device: tmpfs
+      - falcosidekick
+  falcosidekick:
+    image: falcosecurity/falcosidekick:2.26.0
+    environment:
+      - DEBUG=true
