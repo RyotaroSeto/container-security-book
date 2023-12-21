@@ -29,7 +29,31 @@
 ### コンテナのセキュリティ監視で利用されるソフトウェアの紹介
 - [Sysdig](https://github.com/draios/sysdig)
   - 製品もあるが、OSSもある。
-- Falco
+  - プロセスのシステムコールの呼び出しなどをトレースし、ファイルのオープンやコマンドの実行などさまざまなイベントを表示・保存できる
+  - sysdigは引数にフィルタを与えることで、イベントをフィルタリングできる。フィルタの条件は、比較演算子やブール演算子を括弧と組み合わせて使用できる
+  - 以下は「プロセス名がcatもしくはviの場合でかつ、openatシステムコールが呼ばれた」場合のフィルタ
+    - `sudo sysdig '(proc.name = cat or proc.name = vi) and evt.type = openat'`
+  - またキャプチャしたイベントをファイルとして保存できる機能がある。-w ファイル名でファイルを保存し、-rで読み込むことができる
+    - `sudo sysdig -w capture.scap`
+    - `sudo sysdig -r capture.scap`
+- [Falco](https://github.com/falcosecurity/falco)
+  - OSSのコンテナ向けセキュリティモニタリングソフトウェア。もともとsysdigで開発されていたが、現在はCNCF傘下
+  - セキュリティイベントを検知するためのルールを定義でき、ルールに一致するとアラートとして記録する
 - Fluentd / Fluent Bit
+  - コンテナのログやFalcoのアラートなどは、保全や検索などを目的として、外部ストレージや外部サービスに転送を検討すべき。
+  - ログやアラートを外部へ転送するソフトウェア。
+  - 例えばS3やElasticsearchなどへ転送できる
+
+### コンテナのログ収集の設計
+
+**Dockerのロギングドライバを利用する**
+- Dockerはデフォルトで、コンテナの標準出力と標準エラー出力を/var/lib/docker/containers配下に出力する
+- `docker run --rm -d --name nginx nginx:latest`
+- `docker inspect nginx | jq -r .[].LogPath`
+- 感覚としてはDocker → Fluentd → S3 という感じでログを転送する
+
+**ログ収集ソフトウェアをホスト側で動かす**
+- Fluentd / Fluent Bitなどのログ収集ソフトウェアをホスト側でデーモンとして動作させて、コンテナのログを収集する方法
+- 感覚としてPodのサイドカーとしてFluentdがいてそのまま → S3 みたいな感じ?
  
 ## 6.2 コンテナの操作ログの記録
