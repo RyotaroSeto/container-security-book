@@ -129,6 +129,8 @@
 ### Docker Bench for Securityで設定を継続的に監査する
 - ホストやDockerランタイム自体が適切に構成されているか継続的に監査しておくことも重要
 - シェルスクリプトのためクローンし、docker-bench-security.shを実行するだけで監査できる
+- git clone https://github.com/docker/docker-bench-security.git
+- sh docker-bench-security.sh
 
 ### SIEMやSOARとの連携
 - ログを収集して通知する基盤
